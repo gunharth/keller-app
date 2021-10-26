@@ -1,33 +1,33 @@
+<svelte:head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css">
+</svelte:head>
 <script>
+	import { onMount } from "svelte"
 	import { initializeApp, getApps, getApp } from 'firebase/app';
-	import { getDatabase, ref as fireRef, onValue } from 'firebase/database';
+	import { getFirestore, collection, onSnapshot } from 'firebase/firestore';
 	import { firebaseConfig } from '$lib/firebaseConfig';
 	import { browser } from '$app/env';
+	import { Col, Container, Row , Table } from 'sveltestrap';
 
 	const firebaseApp =
 		browser && (getApps().length === 0 ? initializeApp(firebaseConfig) : getApp());
 
-	const db = browser && getDatabase(firebaseApp);
+	const db = browser && getFirestore();
 
-	//const colRef = browser && collection(db, 'todos');
+	const colRef = browser && collection(db, 'keller');
 
 	let todos = [];
 
-	const reload =
+	const unsubscribe =
 		browser &&
-		onValue(fireRef(db, 'wasisimkella'), (snapshot) => {
-			console.log(snapshot.val());
+		onSnapshot(colRef, (querySnapshot) => {
+			let fbTodos = [];
+			browser && querySnapshot.forEach((doc) => {
+				let todo = { ...doc.data(), id: doc.id };
+				fbTodos = [todo, ...fbTodos];
+			});
+			todos = fbTodos;
 		});
-	// const unsubscribe =
-	// 	browser &&
-	// 	onSnapshot(colRef, (querySnapshot) => {
-	// 		let fbTodos = [];
-	// 		querySnapshot.forEach((doc) => {
-	// 			let todo = { ...doc.data(), id: doc.id };
-	// 			fbTodos = [todo, ...fbTodos];
-	// 		});
-	// 		todos = fbTodos;
-	// 	});
 
 	let task = '';
 
@@ -55,31 +55,78 @@
 			addTodo();
 		}
 	};
+
+
+  console.log(todos)
+
 </script>
 
-<input type="text" placeholder="Add a task" bind:value={task} />
-<button on:click={addTodo}>Add</button>
+<Container>
+	<ul class="filters">
+        <li>
+          <a class={currentFilter === "all" ? "selected" : ""} href="#all">
+            All
+          </a>
+        </li>
+        <li>
+          <a
+            class={currentFilter === "active" ? "selected" : ""}
+            href="#active"
+          >
+            Active
+          </a>
+        </li>
+        <li>
+          <a
+            class={currentFilter === "completed" ? "selected" : ""}
+            href="#completed"
+          >
+            Completed
+          </a>
+        </li>
+      </ul>
+</Container>
 
-<ol>
-	{#each todos as item, index}
-		<li class:complete={item.isComplete}>
-			<span>
-				{item.task}
-			</span>
-			<span>
-				<button on:click={() => markTodoAsComplete(index)}>done</button>
-				<button on:click={() => deleteTodo(index)}>delete</button>
-			</span>
-		</li>
+<Container>
+  <Row>
+	  <Col>
+<Table size="sm" bordered striped hover responsive>
+  <thead>
+    <tr>
+      <th>Art</th>
+      <th>Flaschen gekauft</th>
+      <th>Flaschen im Keller</th>
+      <th>Jahrgang</th>
+      <th>Land</th>
+      <th>Region</th>
+      <th>Erzeuger</th>
+      <th>Name</th>
+      <th>Traube</th>
+    </tr>
+  </thead>
+  <tbody>
+	  {#each todos as item, index}
+		<tr>
+			<td>{item.Art}</td>
+			<td>{item['Flaschen gekauft']}</td>
+			<td>{item['Flaschen im Keller']}</td>
+			<td>{item.Jahrgang}</td>
+			<td>{item.Land}</td>
+			<td>{item.Region}</td>
+			<td>{item.Erzeuger}</td>
+			<td>{item.Name}</td>
+			<td>{item.Traube}</td>
+		</tr>
 	{:else}
-		<p>Create your first todo</p>
+		<p>Loading data ...</p>
 	{/each}
-</ol>
+
+  </tbody>
+</Table>
+
+</Col>
+</Row>
+</Container>
+
 
 <svelte:window on:keydown={keyIsPressed} />
-
-<style>
-	.complete {
-		text-decoration: line-through;
-	}
-</style>
