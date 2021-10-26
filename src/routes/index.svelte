@@ -1,27 +1,33 @@
 <script>
 	import { initializeApp, getApps, getApp } from 'firebase/app';
-	import { getFirestore, collection, onSnapshot } from 'firebase/firestore';
+	import { getDatabase, ref as fireRef, onValue } from 'firebase/database';
 	import { firebaseConfig } from '$lib/firebaseConfig';
 	import { browser } from '$app/env';
 
 	const firebaseApp =
 		browser && (getApps().length === 0 ? initializeApp(firebaseConfig) : getApp());
 
-	const db = browser && getFirestore();
+	const db = browser && getDatabase(firebaseApp);
 
-	const colRef = browser && collection(db, 'todos');
+	//const colRef = browser && collection(db, 'todos');
 
 	let todos = [];
-	const unsubscribe =
+
+	const reload =
 		browser &&
-		onSnapshot(colRef, (querySnapshot) => {
-			let fbTodos = [];
-			querySnapshot.forEach((doc) => {
-				let todo = { ...doc.data(), id: doc.id };
-				fbTodos = [todo, ...fbTodos];
-			});
-			todos = fbTodos;
+		onValue(fireRef(db, 'wasisimkella'), (snapshot) => {
+			console.log(snapshot.val());
 		});
+	// const unsubscribe =
+	// 	browser &&
+	// 	onSnapshot(colRef, (querySnapshot) => {
+	// 		let fbTodos = [];
+	// 		querySnapshot.forEach((doc) => {
+	// 			let todo = { ...doc.data(), id: doc.id };
+	// 			fbTodos = [todo, ...fbTodos];
+	// 		});
+	// 		todos = fbTodos;
+	// 	});
 
 	let task = '';
 
