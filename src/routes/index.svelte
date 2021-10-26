@@ -17,6 +17,7 @@
 	const colRef = browser && collection(db, 'keller');
 
 	let todos = [];
+	let currentFilter = "all";
 
 	const unsubscribe =
 		browser &&
@@ -42,25 +43,23 @@
 		}
 		task = '';
 	};
-	const markTodoAsComplete = (index) => {
-		todos[index].isComplete = !todos[index].isComplete;
-	};
-	const deleteTodo = (index) => {
-		let deleteItem = todos[index];
-		todos = todos.filter((item) => item != deleteItem);
-	};
 
-	const keyIsPressed = (e) => {
-		if (e.key === 'Enter') {
-			addTodo();
-		}
-	};
+	function render() {
+    currentFilter = "all";
+    if (window.location.hash === "#redwine") {
+      currentFilter = "redwine";
+    } else if (window.location.hash === "#completed") {
+      currentFilter = "completed";
+    }
+  }
 
 
-  console.log(todos)
+	//window.addEventListener("hashchange", render);
+
+	$: filtered = currentFilter === 'all' ? todos : todos.filter((item) => item.Art === 'R')
 
 </script>
-
+<svelte:window on:hashchange={render}/>
 <Container>
 	<ul class="filters">
         <li>
@@ -71,17 +70,9 @@
         <li>
           <a
             class={currentFilter === "active" ? "selected" : ""}
-            href="#active"
+            href="#redwine"
           >
-            Active
-          </a>
-        </li>
-        <li>
-          <a
-            class={currentFilter === "completed" ? "selected" : ""}
-            href="#completed"
-          >
-            Completed
+            Rotweine
           </a>
         </li>
       </ul>
@@ -105,7 +96,7 @@
     </tr>
   </thead>
   <tbody>
-	  {#each todos as item, index}
+	  {#each filtered as item, index}
 		<tr>
 			<td>{item.Art}</td>
 			<td>{item['Flaschen gekauft']}</td>
@@ -127,6 +118,3 @@
 </Col>
 </Row>
 </Container>
-
-
-<svelte:window on:keydown={keyIsPressed} />
